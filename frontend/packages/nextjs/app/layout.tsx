@@ -14,13 +14,12 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
       <body>
         <ThemeProvider enableSystem>
           <ScaffoldEthAppWithProviders>
-            <SidebarProvider>
-              <AppSidebar />
-              <main className="w-full">
-               
-                {children}
-              </main>
-            </SidebarProvider>
+            {/* <SidebarProvider> */}
+            {/* <AppSidebar /> */}
+            <main className="w-full">
+              {children}
+            </main>
+            {/* </SidebarProvider> */}
           </ScaffoldEthAppWithProviders>
         </ThemeProvider>
       </body>
