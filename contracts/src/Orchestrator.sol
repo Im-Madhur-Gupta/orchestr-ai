@@ -1,6 +1,23 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.27;
 
+interface IEAS {
+	struct Attestation {
+		bytes32 uid;
+		bytes32 schema;
+		uint64 time;
+		uint64 expirationTime;
+		uint64 revocationTime;
+		bytes32 refUID;
+		address recipient;
+		address attester;
+		bool revocable;
+		bytes data;
+	}
+
+	function getAttestation(bytes32 uid) external view returns (Attestation memory);
+}
+
 contract AgentMarketPlace {
 	enum JobStatus {
 		InProgress,
@@ -21,6 +38,14 @@ contract AgentMarketPlace {
 		address mpcWalletAddress;
 		address ownerAddress;
 		string metadataId;
+	}
+
+	struct AttestationSchema {
+		string response;
+		string prompt;
+		string jobId; // associated job id
+		address agentAddress; // mpc wallet address of the agent
+		uint256 amount; // amount of ETH sent to the agent
 	}
 
 	// State variables
@@ -44,6 +69,8 @@ contract AgentMarketPlace {
 	error UnauthorizedAgent();
 	error InvalidAmount();
 	error AgentAlreadyRegistered();
+
+	IEAS constant EAS = IEAS(0x4200000000000000000000000000000000000021);
 
 	constructor() {}
 
@@ -120,23 +147,42 @@ contract AgentMarketPlace {
 
 	function disburseFunds(
 		string calldata jobId,
-		string[] calldata attestations
+		bytes32[] calldata attestationUids
 	) external {
 		Job storage job = jobs[jobId];
 		if (job.userAddress == address(0)) revert JobDoesNotExist();
 		require(job.jobStatus == JobStatus.InProgress, "Job not in progress");
+		require(attestationUids.length == job.agentAddresses.length, "Invalid attestation count");
 
-		// Verify attestations (implement your verification logic here)
-		// For now, we'll assume attestations are valid
-
+		uint256 totalRefunded = 0;
 		address[] memory agentAddresses = job.agentAddresses;
+
 		for (uint256 i = 0; i < agentAddresses.length; i++) {
-			require(
-				registeredAgents[agentAddresses[i]].mpcWalletAddress !=
-					address(0),
-				"Invalid agent"
-			);
-			payable(agentAddresses[i]).transfer(job.amounts[i]);
+			try EAS.getAttestation(attestationUids[i]) returns (IEAS.Attestation memory attestation) {
+				AttestationSchema memory decodedData = abi.decode(attestation.data, (AttestationSchema));
+
+				bool isValid = attestation.expirationTime > block.timestamp &&
+					decodedData.agentAddress == agentAddresses[i] &&
+					decodedData.amount == job.amounts[i] &&
+					keccak256(bytes(decodedData.jobId)) == keccak256(bytes(jobId)) &&
+					bytes(decodedData.response).length > 0;
+
+				if (isValid) {
+					// Valid attestation, pay the agent
+					payable(agentAddresses[i]).transfer(job.amounts[i]);
+				} else {
+					// Invalid attestation, add to refund amount
+					totalRefunded += job.amounts[i];
+				}
+			} catch {
+				// Failed to get attestation, add to refund amount
+				totalRefunded += job.amounts[i];
+			}
+		}
+
+		// Refund failed attestations to user
+		if (totalRefunded > 0) {
+			payable(job.userAddress).transfer(totalRefunded);
 		}
 
 		job.jobStatus = JobStatus.Completed;
