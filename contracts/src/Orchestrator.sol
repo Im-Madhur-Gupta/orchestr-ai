@@ -24,8 +24,11 @@ contract AgentMarketPlace {
 	}
 
 	// State variables
-	mapping(string => Job) public jobs; // jobId -> Job
-	mapping(address => Agent) public registeredAgents;
+	mapping(address => string[]) public userAddressToJobIds; // user address -> job ids
+	mapping(string => Job) public jobs; // job id -> Job
+
+	address[] public registeredAgentAddresses; // all registered agent addresses
+	mapping(address => Agent) public registeredAgents; // agent address -> Agent
 
 	event AgentRegistered(address mpcWallet, address owner, string metadataId);
 	event FundsAccepted(
@@ -44,6 +47,23 @@ contract AgentMarketPlace {
 
 	constructor() {}
 
+	function getJobsByUser(address userAddress) external view returns (Job[] memory) {
+		string[] memory jobIds = userAddressToJobIds[userAddress];
+		Job[] memory jobsByUser = new Job[](jobIds.length);
+		for (uint256 i = 0; i < jobIds.length; i++) {
+			jobsByUser[i] = jobs[jobIds[i]];
+		}
+		return jobsByUser;
+	}
+
+	function getAgents() external view returns (Agent[] memory) {
+		Agent[] memory agents = new Agent[](registeredAgentAddresses.length);
+		for (uint256 i = 0; i < registeredAgentAddresses.length; i++) {
+			agents[i] = registeredAgents[registeredAgentAddresses[i]];
+		}
+		return agents;
+	}
+
 	function registerAgent(
 		address mpcWalletAddress,
 		address ownerAddress,
@@ -57,6 +77,7 @@ contract AgentMarketPlace {
 			ownerAddress: ownerAddress,
 			metadataId: metadataId
 		});
+		registeredAgentAddresses.push(mpcWalletAddress);
 
 		emit AgentRegistered(mpcWalletAddress, ownerAddress, metadataId);
 	}
@@ -75,7 +96,8 @@ contract AgentMarketPlace {
 
 		for (uint256 i = 0; i < agentAddresses.length; i++) {
 			require(
-				registeredAgents[agentAddresses[i]].mpcWalletAddress != address(0),
+				registeredAgents[agentAddresses[i]].mpcWalletAddress !=
+					address(0),
 				"Agent not registered"
 			);
 			totalAmount += amounts[i];
@@ -91,6 +113,7 @@ contract AgentMarketPlace {
 			jobStatus: JobStatus.InProgress,
 			totalAmount: totalAmount
 		});
+		userAddressToJobIds[msg.sender].push(jobId);
 
 		emit FundsAccepted(jobId, agentAddresses, amounts);
 	}
@@ -108,7 +131,11 @@ contract AgentMarketPlace {
 
 		address[] memory agentAddresses = job.agentAddresses;
 		for (uint256 i = 0; i < agentAddresses.length; i++) {
-			require(registeredAgents[agentAddresses[i]].mpcWalletAddress != address(0), "Invalid agent");
+			require(
+				registeredAgents[agentAddresses[i]].mpcWalletAddress !=
+					address(0),
+				"Invalid agent"
+			);
 			payable(agentAddresses[i]).transfer(job.amounts[i]);
 		}
 
