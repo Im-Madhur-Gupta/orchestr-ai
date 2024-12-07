@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import OCButton from "~~/components/Button";
-import { BASE_URL } from "~~/services/api";
+import { NGROK_BASE_URL } from "~~/services/api";
 
 const schema = z.object({
   name: z.string().min(1, {
@@ -39,6 +40,7 @@ const RegisterAgent = () => {
   });
   const [loading, setLoading] = useState(false);
   const { address } = useAccount();
+  const router = useRouter();
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -51,7 +53,7 @@ const RegisterAgent = () => {
         costPerOutputToken: parseFloat(data.costPerOutputToken),
         userAddress: address,
       };
-      await fetch(`${BASE_URL}/agents`, {
+      await fetch(`${NGROK_BASE_URL}/agents`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -59,6 +61,7 @@ const RegisterAgent = () => {
         body: JSON.stringify(payload),
       });
       alert("Agent registered successfully!");
+      router.push("/agent-dashboard");
       // TODO -> REDIRECT TO ALL AGENTS PAGE
     } catch (err) {
       console.error(err);
@@ -100,7 +103,9 @@ const RegisterAgent = () => {
             </div>
             <div className="w-full flex justify-center items-center">
               <div className="w-1/2 flex justify-center items-center">
-                <OCButton type="submit">Register Agent</OCButton>
+                <OCButton type="submit" style={{ margin: "20px 0" }}>
+                  Register Agent
+                </OCButton>
               </div>
             </div>
           </div>

@@ -1,30 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
+import { usePathname } from "next/navigation";
+import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useTheme } from "next-themes";
 import { WagmiProvider } from "wagmi";
+import { baseSepolia } from "wagmi/chains";
 import { Header } from "~~/components/Header";
-import { BlockieAvatar } from "~~/components/scaffold-eth";
 import { useInitializeNativeCurrencyPrice } from "~~/hooks/scaffold-eth";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   useInitializeNativeCurrencyPrice();
-  const router = useRouter();
   const pathname = usePathname();
 
   return (
     <>
       <div className={`flex flex-col`} style={{ height: "100vh" }}>
-        <Header
-          onClick={() => {
-            router.push("/register-agent");
-          }}
-          hideReg={pathname === "/register-agent"}
-        />
+        <Header hideReg={pathname === "/register-agent"} hideView={pathname === "/agent-dashboard"} />
         {children}
       </div>
     </>
@@ -40,24 +32,13 @@ export const queryClient = new QueryClient({
 });
 
 export const ScaffoldEthAppWithProviders = ({ children }: { children: React.ReactNode }) => {
-  const { resolvedTheme } = useTheme();
-  const isDarkMode = resolvedTheme === "dark";
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        {/* <ProgressBar height="3px" color="#2299dd" /> */}
-        <RainbowKitProvider
-          avatar={BlockieAvatar}
-          theme={mounted ? (isDarkMode ? darkTheme() : lightTheme()) : lightTheme()}
-        >
+        {/* @ts-ignore */}
+        <OnchainKitProvider apiKey={process.env.NEXT_PUBLIC_ONCHAIN_KIT_CLIENT_API_KEY} chain={baseSepolia}>
           <ScaffoldEthApp>{children}</ScaffoldEthApp>
-        </RainbowKitProvider>
+        </OnchainKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
