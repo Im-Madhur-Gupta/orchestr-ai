@@ -18,7 +18,15 @@ const Plans = ({ plans, onAccept, onReject }: IPlansRender) => {
           <div key={index} className="bg-[rgba(255,255,255,0.18)] rounded-xl shadow-sm px-3 py-1">
             <div className="flex flex-col gap-y-2">
               <div className="flex items-center space-x-4">
-                <Image src={plan.agentImage} alt="agent" width={30} height={30} className="rounded-full" />
+                <Image
+                  src={
+                    "https://img.freepik.com/premium-photo/friendly-looking-ai-agent-as-logo-white-background-style-raw-job-id-ef2c5ef7e19b4dadbef969fcb37e_343960-69677.jpg"
+                  }
+                  alt="agent"
+                  width={30}
+                  height={30}
+                  className="rounded-full"
+                />
                 <p className="text-bold">{plan.agentName}</p>
               </div>
               <div className="flex items-center justify-between text-sm text-white-300 gap-x-16">
