@@ -56,6 +56,8 @@
     "@langchain/core": "^0.3.20",
     "@langchain/langgraph": "^0.2.24",
     "@langchain/openai": "^0.3.14",
+    "@octokit/core": "^6.1.2",
+    "@octokit/rest": "^21.0.2",
     "dotenv": "^16.4.7",
     "langchain-xai": "^0.2.2"
   }
