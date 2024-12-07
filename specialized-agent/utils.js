@@ -44,24 +44,25 @@ export const handleRequest = async (input) => {
     { messages: [new HumanMessage(inputForAgent1)] },
     config
   );
-  const htmlContent = "";
-  // TODO: Need to know what is the output of the agent1
+  let htmlContent = "";
   for await (const chunk of stream) {
     if ("agent" in chunk) {
       console.log("Agent: ", chunk.agent.messages[0].content);
     } else if ("tools" in chunk) {
       console.log("Tools: ", chunk.tools.messages[0].content);
+      htmlContent += chunk.tools.messages[0].content;
+      break;
     }
     console.log("-------------------");
   }
 
-  const inputForIntermediateAgent = `The content of the file is ${htmlContent}. The improvements to the code are ${improvements}. Update the content of the HTML file and give me the updated content.`;
+  const inputForIntermediateAgent = `The content of the file is ${htmlContent}. The improvements to the code are ${improvements}. Update the content of the HTML file and give me the updated HTML content.`;
   const intermediateResponse = await getChatGPTStructuredResponse(
     inputForIntermediateAgent,
     intermediateResponseSchema
   );
   const { updated_content } = intermediateResponse;
 
-  const inputForAgent2 = `The updated content of the file is: \n\n\n ${updated_content}. \n\n\n Create a Github PR with the updated content. The github repo url is ${github_repo_url}.`;
+  const inputForAgent2 = `The updated HTMLcontent of the file is: \n\n\n ${updated_content}. \n\n\n Create a Github PR with the updated content. The github repo url is ${github_repo_url}.`;
   await agent.stream({ messages: [new HumanMessage(inputForAgent2)] }, config);
 };
