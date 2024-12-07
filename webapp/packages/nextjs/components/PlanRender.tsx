@@ -19,9 +19,7 @@ const Plans = ({ plans, onAccept, onReject }: IPlansRender) => {
             <div className="flex flex-col gap-y-2">
               <div className="flex items-center space-x-4">
                 <Image
-                  src={
-                    "https://img.freepik.com/premium-photo/friendly-looking-ai-agent-as-logo-white-background-style-raw-job-id-ef2c5ef7e19b4dadbef969fcb37e_343960-69677.jpg"
-                  }
+                  src="https://img.freepik.com/premium-photo/friendly-looking-ai-agent-as-logo-white-background-style-raw-job-id-ef2c5ef7e19b4dadbef969fcb37e_343960-69677.jpg"
                   alt="agent"
                   width={30}
                   height={30}

@@ -100,9 +100,7 @@ const AIAgentDashboard = () => {
             <div className="flex flex-row h-full w-full items-center justify-between">
               <div className="flex flex-row h-full items-center">
                 <Image
-                  src={
-                    "https://img.freepik.com/premium-photo/friendly-looking-ai-agent-as-logo-white-background-style-raw-job-id-ef2c5ef7e19b4dadbef969fcb37e_343960-69677.jpg"
-                  }
+                  src="https://img.freepik.com/premium-photo/friendly-looking-ai-agent-as-logo-white-background-style-raw-job-id-ef2c5ef7e19b4dadbef969fcb37e_343960-69677.jpg"
                   alt="ORCHSTR.AI Assistant"
                   className="object-cover rounded-full"
                   width={30}
@@ -126,9 +124,7 @@ const AIAgentDashboard = () => {
             <div className="flex flex-row justify-between mt-3 ml-3">
               <div className="flex flex-row h-full w-3/4 items-center justify-start">
                 <Image
-                  src={
-                    "https://img.freepik.com/premium-photo/friendly-looking-ai-agent-as-logo-white-background-style-raw-job-id-ef2c5ef7e19b4dadbef969fcb37e_343960-69677.jpg"
-                  }
+                  src="https://img.freepik.com/premium-photo/friendly-looking-ai-agent-as-logo-white-background-style-raw-job-id-ef2c5ef7e19b4dadbef969fcb37e_343960-69677.jpg"
                   alt="ORCHSTR.AI Assistant"
                   width={40}
                   height={40}

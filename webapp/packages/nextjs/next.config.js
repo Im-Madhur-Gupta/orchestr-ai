@@ -7,18 +7,6 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "imgv3.fotor.com",
-        port: "",
-        pathname: "/images/blog-richtext-image/10-profile-picture-ideas-to-make-you-stand-out.jpg",
-      },
-      {
-        protocol: "https",
-        hostname: "www.google.com",
-        port: "",
-        pathname: "",
-      },
-      {
-        protocol: "https",
         hostname: "img.freepik.com",
         port: "",
         pathname:
