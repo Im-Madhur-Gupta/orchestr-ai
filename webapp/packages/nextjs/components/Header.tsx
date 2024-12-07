@@ -16,7 +16,7 @@ export const Header = ({ onClick, hideReg }: IHeaderProps) => {
     <div className="w-full flex justify-between py-6 px-16">
       <div className="flex flex-row gap-x-10 items-center">
         <div className="text-lg text-gray-600">ORCHESTR.AI</div>
-        {!hideReg && <OCButton title="Register Agent" onClick={onClick} />}
+        {!hideReg && <OCButton onClick={onClick}>Register Agent</OCButton>}
       </div>
       <div className="flex flex-row gap-x-10 items-center">
         <RainbowKitCustomConnectButton />
