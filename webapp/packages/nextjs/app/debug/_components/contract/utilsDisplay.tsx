@@ -1,11 +1,5 @@
 import { ReactElement, useState } from "react";
-import {
-  TransactionBase,
-  TransactionReceipt,
-  formatEther,
-  isAddress,
-  isHex,
-} from "viem";
+import { TransactionBase, TransactionReceipt, formatEther, isAddress, isHex } from "viem";
 import { ArrowsRightLeftIcon } from "@heroicons/react/24/solid";
 import { Address } from "~~/components/scaffold-eth";
 import { replacer } from "~~/utils/scaffold-eth/common";
@@ -36,9 +30,7 @@ export const displayTxResult = (
 
   if (typeof displayContent === "string") {
     if (isAddress(displayContent)) {
-      return (
-        <Address address={displayContent} size={fontSize} onlyEnsOrAddress />
-      );
+      return <Address address={displayContent} size={fontSize} onlyEnsOrAddress />;
     }
 
     if (isHex(displayContent)) {
@@ -61,10 +53,7 @@ const NumberDisplay = ({ value }: { value: bigint }) => {
   const [isEther, setIsEther] = useState(false);
 
   const asNumber = Number(value);
-  if (
-    asNumber <= Number.MAX_SAFE_INTEGER &&
-    asNumber >= Number.MIN_SAFE_INTEGER
-  ) {
+  if (asNumber <= Number.MAX_SAFE_INTEGER && asNumber >= Number.MIN_SAFE_INTEGER) {
     return String(value);
   }
 
@@ -75,10 +64,7 @@ const NumberDisplay = ({ value }: { value: bigint }) => {
         className="tooltip tooltip-secondary font-sans ml-2"
         data-tip={isEther ? "Multiply by 1e18" : "Divide by 1e18"}
       >
-        <button
-          className="btn btn-ghost btn-circle btn-xs"
-          onClick={() => setIsEther(!isEther)}
-        >
+        <button className="btn btn-ghost btn-circle btn-xs" onClick={() => setIsEther(!isEther)}>
           <ArrowsRightLeftIcon className="h-3 w-3 opacity-65" />
         </button>
       </span>
@@ -105,13 +91,7 @@ export const ObjectFieldDisplay = ({
   );
 };
 
-const ArrayDisplay = ({
-  values,
-  size,
-}: {
-  values: DisplayContent[];
-  size: ResultFontSize;
-}) => {
+const ArrayDisplay = ({ values, size }: { values: DisplayContent[]; size: ResultFontSize }) => {
   return (
     <div className="flex flex-col gap-y-1">
       {values.length ? "array" : "[]"}
@@ -122,13 +102,7 @@ const ArrayDisplay = ({
   );
 };
 
-const StructDisplay = ({
-  struct,
-  size,
-}: {
-  struct: Record<string, any>;
-  size: ResultFontSize;
-}) => {
+const StructDisplay = ({ struct, size }: { struct: Record<string, any>; size: ResultFontSize }) => {
   return (
     <div className="flex flex-col gap-y-1">
       struct

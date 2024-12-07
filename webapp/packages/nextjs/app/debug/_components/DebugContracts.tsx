@@ -11,17 +11,13 @@ const selectedContractStorageKey = "scaffoldEth2.selectedContract";
 
 export function DebugContracts() {
   const contractsData = useAllContracts();
-  const contractNames = useMemo(
-    () => Object.keys(contractsData) as ContractName[],
-    [contractsData],
-  );
+  const contractNames = useMemo(() => Object.keys(contractsData) as ContractName[], [contractsData]);
 
-  const [selectedContract, setSelectedContract] =
-    useSessionStorage<ContractName>(
-      selectedContractStorageKey,
-      contractNames[0],
-      { initializeWithValue: false },
-    );
+  const [selectedContract, setSelectedContract] = useSessionStorage<ContractName>(
+    selectedContractStorageKey,
+    contractNames[0],
+    { initializeWithValue: false },
+  );
 
   useEffect(() => {
     if (!contractNames.includes(selectedContract)) {
@@ -37,7 +33,7 @@ export function DebugContracts() {
         <>
           {contractNames.length > 1 && (
             <div className="flex flex-row gap-2 w-full max-w-7xl pb-1 px-6 lg:px-10 flex-wrap">
-              {contractNames.map((contractName) => (
+              {contractNames.map(contractName => (
                 <button
                   className={`btn btn-secondary btn-sm font-light hover:border-transparent ${
                     contractName === selectedContract
@@ -48,12 +44,8 @@ export function DebugContracts() {
                   onClick={() => setSelectedContract(contractName)}
                 >
                   {contractName}
-                  {(contractsData[contractName] as GenericContract)
-                    ?.external && (
-                    <span
-                      className="tooltip tooltip-top tooltip-accent"
-                      data-tip="External contract"
-                    >
+                  {(contractsData[contractName] as GenericContract)?.external && (
+                    <span className="tooltip tooltip-top tooltip-accent" data-tip="External contract">
                       <BarsArrowUpIcon className="h-4 w-4 cursor-pointer" />
                     </span>
                   )}
@@ -61,7 +53,7 @@ export function DebugContracts() {
               ))}
             </div>
           )}
-          {contractNames.map((contractName) => (
+          {contractNames.map(contractName => (
             <ContractUI
               key={contractName}
               contractName={contractName}

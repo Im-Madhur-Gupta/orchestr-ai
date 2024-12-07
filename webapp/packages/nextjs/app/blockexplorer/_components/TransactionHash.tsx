@@ -4,10 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 // @ts-ignore
 import CopyToClipboard from "react-copy-to-clipboard";
-import {
-  CheckCircleIcon,
-  DocumentDuplicateIcon,
-} from "@heroicons/react/24/outline";
+import { CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 
 export const TransactionHash = ({ hash }: { hash: string }) => {
   const [addressCopied, setAddressCopied] = useState(false);
@@ -32,10 +29,7 @@ export const TransactionHash = ({ hash }: { hash: string }) => {
             }, 800);
           }}
         >
-          <DocumentDuplicateIcon
-            className="ml-1.5 text-xl font-normal h-5 w-5 cursor-pointer"
-            aria-hidden="true"
-          />
+          <DocumentDuplicateIcon className="ml-1.5 text-xl font-normal h-5 w-5 cursor-pointer" aria-hidden="true" />
         </CopyToClipboard>
       )}
     </div>

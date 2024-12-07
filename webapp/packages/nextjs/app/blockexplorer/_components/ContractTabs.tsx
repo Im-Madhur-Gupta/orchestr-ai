@@ -26,13 +26,7 @@ const publicClient = createPublicClient({
 });
 
 export const ContractTabs = ({ address, contractData }: PageProps) => {
-  const {
-    blocks,
-    transactionReceipts,
-    currentPage,
-    totalBlocks,
-    setCurrentPage,
-  } = useFetchBlocks();
+  const { blocks, transactionReceipts, currentPage, totalBlocks, setCurrentPage } = useFetchBlocks();
   const [activeTab, setActiveTab] = useState("transactions");
   const [isContract, setIsContract] = useState(false);
 
@@ -47,15 +41,12 @@ export const ContractTabs = ({ address, contractData }: PageProps) => {
     checkIsContract();
   }, [address]);
 
-  const filteredBlocks = blocks.filter((block) =>
-    block.transactions.some((tx) => {
+  const filteredBlocks = blocks.filter(block =>
+    block.transactions.some(tx => {
       if (typeof tx === "string") {
         return false;
       }
-      return (
-        tx.from.toLowerCase() === address.toLowerCase() ||
-        tx.to?.toLowerCase() === address.toLowerCase()
-      );
+      return tx.from.toLowerCase() === address.toLowerCase() || tx.to?.toLowerCase() === address.toLowerCase();
     }),
   );
 
@@ -69,10 +60,7 @@ export const ContractTabs = ({ address, contractData }: PageProps) => {
           >
             Transactions
           </button>
-          <button
-            className={`tab ${activeTab === "code" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("code")}
-          >
+          <button className={`tab ${activeTab === "code" ? "tab-active" : ""}`} onClick={() => setActiveTab("code")}>
             Code
           </button>
           <button
@@ -81,20 +69,14 @@ export const ContractTabs = ({ address, contractData }: PageProps) => {
           >
             Storage
           </button>
-          <button
-            className={`tab  ${activeTab === "logs" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("logs")}
-          >
+          <button className={`tab  ${activeTab === "logs" ? "tab-active" : ""}`} onClick={() => setActiveTab("logs")}>
             Logs
           </button>
         </div>
       )}
       {activeTab === "transactions" && (
         <div className="pt-4">
-          <TransactionsTable
-            blocks={filteredBlocks}
-            transactionReceipts={transactionReceipts}
-          />
+          <TransactionsTable blocks={filteredBlocks} transactionReceipts={transactionReceipts} />
           <PaginationButton
             currentPage={currentPage}
             totalItems={Number(totalBlocks)}
@@ -103,17 +85,10 @@ export const ContractTabs = ({ address, contractData }: PageProps) => {
         </div>
       )}
       {activeTab === "code" && contractData && (
-        <AddressCodeTab
-          bytecode={contractData.bytecode}
-          assembly={contractData.assembly}
-        />
+        <AddressCodeTab bytecode={contractData.bytecode} assembly={contractData.assembly} />
       )}
-      {activeTab === "storage" && (
-        <AddressStorageTab address={address as `0x${string}`} />
-      )}
-      {activeTab === "logs" && (
-        <AddressLogsTab address={address as `0x${string}`} />
-      )}
+      {activeTab === "storage" && <AddressStorageTab address={address as `0x${string}`} />}
+      {activeTab === "logs" && <AddressLogsTab address={address as `0x${string}`} />}
     </>
   );
 };
