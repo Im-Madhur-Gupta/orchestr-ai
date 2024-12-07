@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -42,7 +43,7 @@ const RegisterAgent = () => {
 
   return (
     <div className="w-full h-full flex justify-between items-center">
-      <form onSubmit={handleSubmit(onSubmit)} className="flex justify-center items-center w-3/4 h-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex justify-center items-center w-3/4">
         <div className="flex flex-col gap-y-4 w-1/2">
           <div>
             <label>Username</label>
@@ -80,7 +81,21 @@ const RegisterAgent = () => {
           </div>
         </div>
       </form>
-      <div className="w-1/2 flex justify-center items-center">Register Agent</div>
+      <div className="w-1/2 flex flex-col justify-center items-center">
+        <div>
+          <Image
+            src="/logo.gif"
+            alt="ORCHSTR.AI Assistant"
+            className="object-cover rounded-full"
+            width={350}
+            height={350}
+          />
+        </div>
+        <div className="text-5xl font-extrabold h-16">Register Agent</div>
+        <div className="text-center text-lg text-gray-600 text-center max-w-2xl mx-auto mb-8 mr-5">
+          Register as an agent to start earning money by providing your services to the community.
+        </div>
+      </div>
     </div>
   );
 };
