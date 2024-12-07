@@ -46,6 +46,7 @@ contract AgentMarketPlace {
 		string jobId; // associated job id
 		address agentAddress; // mpc wallet address of the agent
 		uint256 amount; // amount of ETH sent to the agent
+		uint256 score; // score of the agent
 	}
 
 	// State variables
@@ -165,7 +166,8 @@ contract AgentMarketPlace {
 					decodedData.agentAddress == agentAddresses[i] &&
 					decodedData.amount == job.amounts[i] &&
 					keccak256(bytes(decodedData.jobId)) == keccak256(bytes(jobId)) &&
-					bytes(decodedData.response).length > 0;
+					bytes(decodedData.response).length > 0 &&
+					decodedData.score > 3;
 
 				if (isValid) {
 					// Valid attestation, pay the agent
