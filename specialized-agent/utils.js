@@ -48,9 +48,9 @@ export const handleRequest = async (input) => {
   // TODO: Need to know what is the output of the agent1
   for await (const chunk of stream) {
     if ("agent" in chunk) {
-      console.log(chunk.agent.messages[0].content);
+      console.log("Agent: ", chunk.agent.messages[0].content);
     } else if ("tools" in chunk) {
-      console.log(chunk.tools.messages[0].content);
+      console.log("Tools: ", chunk.tools.messages[0].content);
     }
     console.log("-------------------");
   }
