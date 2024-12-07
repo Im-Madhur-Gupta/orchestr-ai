@@ -8,19 +8,35 @@ import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as readline from "readline";
 import { z } from "zod";
-import { getDetailsFromRepo } from "./github_interaction";
+import {
+  getDetailsFromRepo,
+  updateTitleAndCreatePR,
+} from "./github_interaction.js";
 
 // Define the input schema using Zod
 export const GetGithubRepoContentInput = z
-.object({
-  repo_url: z
-    .string()
-    .describe(
-      "The url of the github repo. e.g. `https://github.com/coinbase/cdp-agentkit-core`"
-    ),
-})
-.strip()
-.describe("Instructions for getting the content of a github repo");
+  .object({
+    repo_url: z
+      .string()
+      .describe(
+        "The url of the github repo. e.g. `https://github.com/coinbase/cdp-agentkit-core`"
+      ),
+  })
+  .strip()
+  .describe("Instructions for getting the content of a github repo");
+
+// Define the input schema using Zod
+export const UpdateContentAndCreatePRInput = z
+  .object({
+    repo_url: z
+      .string()
+      .describe(
+        "The url of the github repo. e.g. `https://github.com/coinbase/cdp-agentkit-core`"
+      ),
+    newContent: z.string().describe("The new content of the file"),
+  })
+  .strip()
+  .describe("Updated content of a file and creating a PR");
 
 dotenv.config();
 
@@ -30,8 +46,8 @@ dotenv.config();
  * @throws {Error} - If required environment variables are missing
  * @returns {void}
  */
-function validateEnvironment(): void {
-  const missingVars: string[] = [];
+function validateEnvironment() {
+  const missingVars = [];
 
   // Check required variables
   const requiredVars = [
@@ -68,12 +84,7 @@ validateEnvironment();
 // Configure a file to persist the agent's CDP MPC Wallet Data
 const WALLET_DATA_FILE_1 = "wallet_data_1.txt";
 
-/**
- * Initialize the agent with CDP Agentkit
- *
- * @returns Agent executor and config
- */
-async function initializeAgent1() {
+export async function initializeAgent1() {
   try {
     // Initialize LLM with xAI configuration
     const llm = new ChatOpenAI({
@@ -82,7 +93,7 @@ async function initializeAgent1() {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    let walletDataStr: string | null = null;
+    let walletDataStr = null;
 
     // Read existing wallet data if available
     if (fs.existsSync(WALLET_DATA_FILE_1)) {
@@ -106,8 +117,6 @@ async function initializeAgent1() {
     // Initialize CDP Agentkit Toolkit and get tools
     const cdpToolkit = new CdpToolkit(agentkit);
     const tools = cdpToolkit.getTools();
-
-    
 
     const getGithubRepoContentTool = new CdpTool(
       {
@@ -146,76 +155,74 @@ async function initializeAgent1() {
   }
 }
 
-/**
- * Run the agent interactively based on user input
- *
- * @param agent - The agent executor
- * @param config - Agent configuration
- */
-async function runChatMode(agent: any, config: any) {
-  console.log("Starting chat mode... Type 'exit' to end.");
-
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  const question = (prompt: string): Promise<string> =>
-    new Promise((resolve) => rl.question(prompt, resolve));
-
+const WALLET_DATA_FILE_2 = "wallet_data_2.txt";
+export async function initializeAgent2() {
   try {
-    while (true) {
-      const userInput = await question("\nPrompt: ");
+    // Initialize LLM with xAI configuration
+    const llm = new ChatOpenAI({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+      temperature: 0,
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
-      if (userInput.toLowerCase() === "exit") {
-        break;
-      }
+    let walletDataStr = null;
 
-      const stream = await agent.stream(
-        { messages: [new HumanMessage(userInput)] },
-        config
-      );
-
-      for await (const chunk of stream) {
-        if ("agent" in chunk) {
-          console.log(chunk.agent.messages[0].content);
-        } else if ("tools" in chunk) {
-          console.log(chunk.tools.messages[0].content);
-        }
-        console.log("-------------------");
+    // Read existing wallet data if available
+    if (fs.existsSync(WALLET_DATA_FILE_2)) {
+      try {
+        walletDataStr = fs.readFileSync(WALLET_DATA_FILE_2, "utf8");
+      } catch (error) {
+        console.error("Error reading wallet data:", error);
+        // Continue without wallet data
       }
     }
+
+    // Configure CDP Agentkit
+    const config = {
+      cdpWalletData: walletDataStr || undefined,
+      networkId: process.env.NETWORK_ID || "base-sepolia",
+    };
+
+    // Initialize CDP agentkit
+    const agentkit = await CdpAgentkit.configureWithWallet(config);
+
+    // Initialize CDP Agentkit Toolkit and get tools
+    const cdpToolkit = new CdpToolkit(agentkit);
+    const tools = cdpToolkit.getTools();
+
+    const raisePRTool = new CdpTool(
+      {
+        name: "update_content_and_create_pr",
+        description: "Update the content of a file and create a PR",
+        argsSchema: UpdateContentAndCreatePRInput,
+        func: updateTitleAndCreatePR,
+      },
+      agentkit
+    );
+    tools.push(raisePRTool);
+
+    // Store buffered conversation history in memory
+    const memory = new MemorySaver();
+    const agentConfig = {
+      configurable: { thread_id: "CDP Agentkit Chatbot Example!" },
+    };
+
+    // Create React Agent using the LLM and CDP Agentkit tools
+    const agent = createReactAgent({
+      llm,
+      tools,
+      checkpointSaver: memory,
+      messageModifier:
+        "You are a helpful agent that can interact onchain using the Coinbase Developer Platform Agentkit. You are empowered to interact onchain using your tools. If you ever need funds, you can request them from the faucet if you are on network ID `base-sepolia`. If not, you can provide your wallet details and request funds from the user. If someone asks you to do something you can't do with your currently available tools, you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is explicitly requested. You can update the content of a file and create a PR.",
+    });
+
+    // Save wallet data
+    const exportedWallet = await agentkit.exportWallet();
+    fs.writeFileSync(WALLET_DATA_FILE_2, exportedWallet);
+
+    return { agent, config: agentConfig };
   } catch (error) {
-    if (error instanceof Error) {
-      console.error("Error:", error.message);
-    }
-    process.exit(1);
-  } finally {
-    rl.close();
+    console.error("Failed to initialize agent:", error);
+    throw error; // Re-throw to be handled by caller
   }
 }
-
-/**
- * Start the chatbot agent
- */
-async function main() {
-  try {
-    const { agent, config } = await initializeAgent1();
-    await runChatMode(agent, config);
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error("Error:", error.message);
-    }
-    process.exit(1);
-  }
-}
-
-if (require.main === module) {
-  console.log("Starting Agent...");
-  main().catch((error) => {
-    console.error("Fatal error:", error);
-    process.exit(1);
-  });
-}
-
-type GithubResponse = { content: string; sha: any };

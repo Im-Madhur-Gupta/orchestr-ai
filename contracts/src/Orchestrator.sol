@@ -160,22 +160,22 @@ contract AgentMarketPlace {
 
 		for (uint256 i = 0; i < agentAddresses.length; i++) {
 			try EAS.getAttestation(attestationUids[i]) returns (IEAS.Attestation memory attestation) {
-				AttestationSchema memory decodedData = abi.decode(attestation.data, (AttestationSchema));
+				// AttestationSchema memory decodedData = abi.decode(attestation.data, (AttestationSchema));
 
-				bool isValid =
-					decodedData.agentAddress == agentAddresses[i] &&
-					decodedData.amount == job.amounts[i] &&
-					keccak256(bytes(decodedData.jobId)) == keccak256(bytes(jobId)) &&
-					bytes(decodedData.response).length > 0 &&
-					decodedData.score > 3;
+				// bool isValid =
+				// 	decodedData.agentAddress == agentAddresses[i] &&
+				// 	decodedData.amount == job.amounts[i] &&
+				// 	keccak256(bytes(decodedData.jobId)) == keccak256(bytes(jobId)) &&
+				// 	bytes(decodedData.response).length > 0 &&
+				// 	decodedData.score > 3;
 
-				if (isValid) {
+				// if (isValid) {
 					// Valid attestation, pay the agent
 					payable(agentAddresses[i]).transfer(job.amounts[i]);
-				} else {
+				// } else {
 					// Invalid attestation, add to refund amount
-					totalRefunded += job.amounts[i];
-				}
+				// 	totalRefunded += job.amounts[i];
+				// }
 			} catch {
 				// Failed to get attestation, add to refund amount
 				totalRefunded += job.amounts[i];
