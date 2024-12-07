@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
@@ -14,7 +14,8 @@ import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   useInitializeNativeCurrencyPrice();
   const router = useRouter();
-  const currentPathname = window.location.pathname;
+  const pathname = usePathname();
+
   return (
     <>
       <div className={`flex flex-col`} style={{ height: "100vh" }}>
@@ -22,7 +23,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
           onClick={() => {
             router.push("/register-agent");
           }}
-          hideReg={currentPathname === "/register-agent"}
+          hideReg={pathname === "/register-agent"}
         />
         {children}
       </div>
