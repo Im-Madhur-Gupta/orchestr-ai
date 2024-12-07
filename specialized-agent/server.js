@@ -9,6 +9,10 @@ const CONSTANTS = {
   PORT: process.env.PORT || 3000
 };
 
+app.get("/api", (req, res) => {
+  res.send("Hello World");
+});
+
 app.post('/api', async (req, res) => {
   try {
     const { input } = req.body;
