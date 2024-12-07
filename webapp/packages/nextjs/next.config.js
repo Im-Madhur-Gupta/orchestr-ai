@@ -3,6 +3,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'imgv3.fotor.com',
+        port: '',
+        pathname: '/images/blog-richtext-image/10-profile-picture-ideas-to-make-you-stand-out.jpg',
+      },
+    ],
+  },
   typescript: {
     ignoreBuildErrors: process.env.NEXT_PUBLIC_IGNORE_BUILD_ERROR === "true",
   },
