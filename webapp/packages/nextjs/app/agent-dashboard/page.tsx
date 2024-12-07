@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { useAccount } from "wagmi";
-import OCButton from "~~/components/Button";
+import { useAccount, useSignMessage } from "wagmi";
 import { BASE_URL } from "~~/services/api";
 import { IAgent } from "./type";
 import { serializeAgents } from "./utils";
+import Button from "~~/components/Button";
 
 
 const AIAgentDashboard = () => {
@@ -14,6 +14,45 @@ const AIAgentDashboard = () => {
     const [agents, setAgents] = useState<IAgent[]>([]);
     const [loading, setLoading] = useState(false);
     const { address } = useAccount();
+    const { signMessageAsync } = useSignMessage();
+
+    const handleWithDrawMessage = async () => {
+        const agent = selectedAgent;
+        if (agent != null) {
+            const signature = await signMessageAsync({
+                message: `Extract funds from ${agent.address}`,
+                account: address,
+            });
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
+
+            console.log(`signature is ${signature}`);
+            const body = {
+                agentAddress: agent.address,
+                userAddress: address,
+                signature: signature
+            }
+
+            const res = await fetch(`${BASE_URL}/agents/withdraw`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+                console.log("failedddd");
+            }
+
+            const data = await res.json();
+            console.log('Withdraw successful:', data);
+        }
+    }
 
     useEffect(() => {
         const fetchAgents = async () => {
@@ -46,26 +85,28 @@ const AIAgentDashboard = () => {
 
         <div className="w-full h-full flex">
             {/* Sidebar (left part) */}
-            <div className="w-1/2 p-4 text-white flex flex-col items-start space-y-4">
+            <div className="w-1/4 p-4 text-white flex flex-col items-start space-y-4">
                 <h3 className="text-xl font-semibold">Your Agents</h3>
                 {agents.map((agent, index) => (
                     <div
                         key={index}
-                        className={`cursor-pointer w-full hover:bg-purple-600/40 p-2 flex flex-row rounded-md ${selectedAgent && selectedAgent.username === agent.username ? 'bg-purple-600/80' : ''}`}
+                        className={`cursor-pointer w-full hover:bg-purple-600/40 p-2 flex flex-row rounded-lg ${selectedAgent && selectedAgent.username === agent.username ? 'bg-purple-600/80' : ''}`}
                         onClick={() => setSelectedAgent(agent)}
                     >
-                        <div className='flex flex-row w-full justify-between'>
-                            <div className='flex flex-row h-full items-center space-x-10'>
-
+                        <div className='flex flex-row h-full w-full items-center justify-between'>
+                            <div className='flex flex-row h-full items-center'>
                                 <Image
-                                    src="/logo.gif"
+                                    src={agent.agentImage}
                                     alt="ORCHSTR.AI Assistant"
                                     className="object-cover rounded-full"
-                                    width={50}
-                                    height={50}
+                                    width={30}
+                                    height={30}
                                 />
                                 {/* Agent Name */}
-                                <div className="text-white font-semibold">{agent.username}</div>
+                                <div>
+                                    <div className="text-white font-semibold ml-2">{agent.username}</div>
+                                </div>
+
                             </div>
                             <div className="text-white font-semibold">{parseFloat(agent.balance).toFixed(6)} ETH</div>
                         </div>
@@ -74,39 +115,128 @@ const AIAgentDashboard = () => {
             </div>
 
             {/* Right part: Agent details */}
-            <div className="flex-1 h-full w-full p-6 bg-transparent rounded-lg shadow-lg relative">
+            <div className="flex-1 h-full w-3/4 bg-purple-600/10 rounded-lg shadow-lg relative">
                 {selectedAgent ? (
-                    <div className="flex flex-col items-center">
-                        {/* Image */}
-                        <div className="w-full flex justify-center mb-6">
-                        </div>
-                        <div className="pb-4 mb-6 w-full text-center flex flex-row justify-between items-center">
-                            <div className='flex flex-row mx-5 h-full w-full items-center justify-start'>
+                    <div className="flex flex-col">
+                        <div className="flex flex-row justify-between mt-3 ml-3">
+                            <div className='flex flex-row h-full w-3/4 items-center justify-start'>
                                 <Image
-                                    src="https://imgv3.fotor.com/images/blog-richtext-image/10-profile-picture-ideas-to-make-you-stand-out.jpg"
+                                    src={selectedAgent.agentImage}
                                     alt="ORCHSTR.AI Assistant"
-                                    width={150}
-                                    height={150}
+                                    width={40}
+                                    height={40}
+                                    style={{ borderRadius: '50%' }}
                                     objectFit="contain"
                                 />
-                                <p className="text-white">{selectedAgent.username}</p>
+                                <div className="flex flex-col items-start justify-start">
+                                    <div className="text-white text-sm font-bold mx-5">{selectedAgent.username}</div>
+                                    <div className="text-green-300 mx-5 font-bold mt-1 text-sm">Healthy</div>
+                                </div>
                             </div>
-                            <div className="w-1/2 flex flex-col justify-end items-end mt-10">
-                                <div className="text-5xl font-extrabold h-16 text-white">50000$</div>
-                                <div className="w-1/2 flex justify-center items-center mt-2">
-                                    <OCButton title="Withdraw" type="submit" />
+
+                        </div>
+
+                        <div className="text-center flex flex-col justify-center items-center mt-10">
+                            <div className="text-3xl font-extrabold h-16 text-white mt-10">Your Agent's Current Wallet Balance </div>
+                            <div className="text-8xl font-extrabold h-16 text-white mt-5">{parseFloat(selectedAgent.balance).toFixed(4)} ETH</div>
+                            {/* <div className="text-8xl font-extrabold h-16 text-white mt-10">ETH</div> */}
+                            <div className="w-1/2 flex justify-center items-center mt-20">
+                                <Button type="submit" style={{
+                                    width: '300px',
+                                    height: '40px',
+                                    paddingTop: '5px',
+                                    paddingBottom: '5px',
+                                }}
+                                    onClick={handleWithDrawMessage}
+                                >
+                                    Withdraw Funds From Agent
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="text-3xl font-extrabold h-16 text-white ml-10 mt-10">On going Tasks </div>
+                        <div className="mx-10 mb-5">
+                            <div className="cursor-pointer w-full p-2 flex flex-row rounded-lg bg-purple-600/10 p-10">
+                                <div className="flex flex-row w-full items-center justify-between">
+                                    <div className='flex flex-row h-full items-center space-x-5'>
+                                        <Image
+                                            src="/logo.gif"
+                                            alt="ORCHSTR.AI Assistant"
+                                            className="object-cover rounded-full"
+                                            width={50}
+                                            height={50}
+                                        />
+                                        {/* Agent Name */}
+                                        <div className="flex flex-col">
+                                            <div className="text-white font-semibold">Task 1</div>
+                                            <div className="text-green-300 font-semibold">Completed</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-white font-semibold">Started By : 0xDE5E8af298722f813AC2693Dd3c66c1FA49568cA</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-col space-y-4 text-white w-full">
+                        <div className="mx-10 mb-5">
+                            <div className="cursor-pointer w-full p-2 flex flex-row rounded-lg bg-purple-600/10 p-10">
+                                <div className="flex flex-row w-full items-center justify-between">
+                                    <div className='flex flex-row h-full items-center space-x-5'>
+                                        <Image
+                                            src="/logo.gif"
+                                            alt="ORCHSTR.AI Assistant"
+                                            className="object-cover rounded-full"
+                                            width={50}
+                                            height={50}
+                                        />
+                                        {/* Agent Name */}
+                                        <div className="flex flex-col">
+                                            <div className="text-white font-semibold">Task 2</div>
+                                            <div className="text-orange-300 font-semibold">In Progress</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-white font-semibold">Started By : 0xDE5E8af298722f813AC2693Dd3c66c1FA49568cA</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mx-10 mb-5">
+                            <div className="cursor-pointer w-full p-2 flex flex-row rounded-lg bg-purple-600/10 p-10">
+                                <div className="flex flex-row w-full items-center justify-between">
+                                    <div className='flex flex-row h-full items-center space-x-5'>
+                                        <Image
+                                            src="/logo.gif"
+                                            alt="ORCHSTR.AI Assistant"
+                                            className="object-cover rounded-full"
+                                            width={50}
+                                            height={50}
+                                        />
+                                        {/* Agent Name */}
+                                        <div className="flex flex-col">
+                                            <div className="text-white font-semibold">Task 3</div>
+                                            <div className="text-red-300 font-semibold">Rejected</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-white font-semibold">Started By : 0xDE5E8af298722f813AC2693Dd3c66c1FA49568cA</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* <div className="flex flex-col space-y-4 text-start text-white w-full">
                             <div className="flex justify-between items-start">
                                 <label className="font-semibold text-white">Username:</label>
-                                <p className="text-white">{selectedAgent.username}</p>
+                                <p className="text-white text-start">{selectedAgent.username}</p>
                             </div>
                             <div className="flex justify-between items-start">
                                 <label className="font-semibold text-white">API URL:</label>
-                                <p className="text-white">{selectedAgent.apiUrl}</p>
+                                <p className="text-white truncate w-full" style={{ maxWidth: '20ch' }}>
+                                    {selectedAgent.apiUrl}
+                                </p>
                             </div>
                             <div className="flex justify-between items-start">
                                 <label className="font-semibold text-white">Description:</label>
@@ -115,15 +245,6 @@ const AIAgentDashboard = () => {
                             <div className="flex justify-between items-start">
                                 <label className="font-semibold text-white">Cost Per Output Token:</label>
                                 <p className="text-white">{selectedAgent.costPerOutputToken}</p>
-                            </div>
-                        </div>
-
-                        {/* Amount Earned Section */}
-                        {/* <div className="w-1/2 flex flex-col justify-center items-center mt-10">
-                            <div className="text-3xl font-extrabold h-16 text-white">Amount Earned</div>
-                            <div className="text-5xl font-extrabold h-16 text-white">50000$</div>
-                            <div className="w-1/2 flex justify-center items-center mt-10">
-                                <OCButton title="Withdraw" type="submit" />
                             </div>
                         </div> */}
                     </div>
