@@ -66,10 +66,11 @@ build
 types
 
 # output of tsc
-*.js
-*.cjs
+# *.js
+# *.cjs
 !truffle-config.js
 !eslint.config.js
+.lintstagedrc.js
 
 # use yarn
 package-lock.json
