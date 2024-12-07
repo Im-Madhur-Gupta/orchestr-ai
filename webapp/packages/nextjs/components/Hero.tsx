@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import FinalOutput from "./FinalOutput";
 import Plans from "./PlanRender";
 import { ethers } from "ethers";
 import { Send } from "lucide-react";
@@ -7,7 +8,7 @@ import { parseEther } from "viem";
 import { useAccount } from "wagmi";
 import { sendFundsToEscrow } from "~~/app/utils";
 import { NGROK_BASE_URL } from "~~/services/api";
-import { IPlan } from "~~/type";
+import { IOutput, IPlan, IServerExecutionPlan } from "~~/type";
 
 const HeroSection = () => {
   const { address } = useAccount();
@@ -17,6 +18,7 @@ const HeroSection = () => {
   const [promptExecuted, setPromptExecuted] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [finalOutputData, setFinalOutputData] = useState<IOutput[] | undefined>(undefined);
 
   const [plan, setPlan] = useState<IPlan[] | undefined>(undefined);
   const [promptMetadataURI, setPromptMetadataURI] = useState<string | undefined>(undefined);
@@ -76,9 +78,9 @@ const HeroSection = () => {
     const agentAddresses = plan.map((p: IPlan) => p.agentAddress);
     const amounts = plan.map((p: IPlan) => parseEther(p.agentPrice.toString()));
     try {
+      setIsLoading(true);
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-
       const res = await sendFundsToEscrow({
         agentAddresses: agentAddresses,
         amounts: amounts,
@@ -93,10 +95,47 @@ const HeroSection = () => {
         alert("Transaction failed. Please try again.");
         return;
       }
-      // const response = await fetch(`${NGROK_BASE_URL}/prompt/execute`);
+      const serverSerializedData: IServerExecutionPlan[] = [];
+      plan.forEach((p: IPlan) => {
+        serverSerializedData.push({
+          agentAddress: p.agentAddress,
+          agentDescription: p.agentDescription,
+          agentImage: p.agentImage,
+          agentName: p.agentName,
+          agentPrice: p.agentPrice,
+          agentPrompt: p.agentPrompt,
+          agentUrl: p.apiUrl,
+        });
+      });
+      const response = await fetch(`${NGROK_BASE_URL}/prompt/execute`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ jobId: randomString, data: serverSerializedData }),
+      });
+
+      const finalData = await response.json();
+      const outputSerializedData: IOutput[] = [];
+
+      finalData?.outputs?.forEach((output: any) => {
+        const serializedOutput: IOutput = {
+          agentAddress: output.agentAddress,
+          response: output.response,
+          prompt: output.prompt,
+          attestationId: output.attestationId,
+          score: output.score,
+          agentPrice: output.agentPrice,
+        };
+        outputSerializedData.push(serializedOutput);
+      });
+
+      setFinalOutputData(outputSerializedData);
     } catch (err) {
       console.error(err);
       alert("An error occurred while processing your request. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
   const loading = isLoading || (plan && plan.length <= 0) || promptExecuted;
@@ -160,7 +199,7 @@ const HeroSection = () => {
               <div className="skeleton h-4 w-full"></div>
             </div>
           )}
-          {plan && plan.length > 0 && (
+          {plan && plan.length > 0 && !finalOutputData && !isLoading && (
             <Plans
               plans={plan}
               onReject={() => {
@@ -172,6 +211,7 @@ const HeroSection = () => {
               onAccept={onAccept}
             />
           )}
+          {finalOutputData && finalOutputData.length > 0 && <FinalOutput output={finalOutputData} />}
           {/* Subtle Background Effects */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute top-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full blur-2xl animate-pulse"></div>

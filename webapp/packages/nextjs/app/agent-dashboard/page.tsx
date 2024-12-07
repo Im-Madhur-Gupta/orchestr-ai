@@ -6,7 +6,7 @@ import { IAgent } from "./type";
 import { serializeAgents } from "./utils";
 import { useAccount, useSignMessage } from "wagmi";
 import Button from "~~/components/Button";
-import { BASE_URL } from "~~/services/api";
+import { NGROK_BASE_URL } from "~~/services/api";
 
 const AIAgentDashboard = () => {
   const [selectedAgent, setSelectedAgent] = useState<IAgent | undefined>(undefined);
@@ -33,10 +33,11 @@ const AIAgentDashboard = () => {
         signature: signature,
       };
 
-      const res = await fetch(`${BASE_URL}/agents/withdraw`, {
+      const res = await fetch(`${NGROK_BASE_URL}/agents/withdraw`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
         },
         body: JSON.stringify(body),
         signal: controller.signal,
@@ -58,7 +59,12 @@ const AIAgentDashboard = () => {
       setLoading(true);
       if (!address) return;
       try {
-        const res = await fetch(`${BASE_URL}/agents/get-agent/${address}`);
+        const res = await fetch(`${NGROK_BASE_URL}/agents/get-agent/${address}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
+        });
         const data = await res.json();
         const serializedAgents = serializeAgents(data);
         setAgents(serializedAgents);
@@ -232,27 +238,6 @@ const AIAgentDashboard = () => {
                 </div>
               </div>
             </div>
-
-            {/* <div className="flex flex-col space-y-4 text-start text-white w-full">
-                            <div className="flex justify-between items-start">
-                                <label className="font-semibold text-white">Username:</label>
-                                <p className="text-white text-start">{selectedAgent.username}</p>
-                            </div>
-                            <div className="flex justify-between items-start">
-                                <label className="font-semibold text-white">API URL:</label>
-                                <p className="text-white truncate w-full" style={{ maxWidth: '20ch' }}>
-                                    {selectedAgent.apiUrl}
-                                </p>
-                            </div>
-                            <div className="flex justify-between items-start">
-                                <label className="font-semibold text-white">Description:</label>
-                                <p className="text-white">{selectedAgent.description}</p>
-                            </div>
-                            <div className="flex justify-between items-start">
-                                <label className="font-semibold text-white">Cost Per Output Token:</label>
-                                <p className="text-white">{selectedAgent.costPerOutputToken}</p>
-                            </div>
-                        </div> */}
           </div>
         ) : (
           <div className="flex flex-col justify-center items-center text-center text-white h-full w-full">
@@ -262,8 +247,13 @@ const AIAgentDashboard = () => {
       </div>
     </div>
   ) : (
-    <div>
-      <div className="text-3xl font-bold text-center">Loading...</div>
+    <div className="w-full h-full flex justify-center items-center">
+      <div className="flex w-3/4 flex-col gap-4 my-4">
+        <div className="skeleton h-32 w-full"></div>
+        <div className="skeleton h-4 w-full"></div>
+        <div className="skeleton h-4 w-full"></div>
+        <div className="skeleton h-4 w-full"></div>
+      </div>
     </div>
   );
 };

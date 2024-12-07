@@ -111,8 +111,13 @@ const RegisterAgent = () => {
           </div>
         </form>
       ) : (
-        <div className="w-1/2 flex justify-center items-center">
-          <div className="text-3xl font-bold text-center">Registering...</div>
+        <div className="w-full h-full flex justify-center items-center">
+          <div className="flex w-3/4 flex-col gap-4 my-4">
+            <div className="skeleton h-32 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+          </div>
         </div>
       )}
       <div className="w-1/2 flex flex-col justify-center items-center">
