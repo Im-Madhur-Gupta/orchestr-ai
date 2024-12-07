@@ -2,7 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
-import { WalletDefault } from "@coinbase/onchainkit/wallet";
+import {
+  // FaucetButton,
+  RainbowKitCustomConnectButton,
+} from "~~/components/scaffold-eth";
 
 interface IHeaderProps {
   hideReg: boolean;
@@ -33,7 +36,8 @@ export const Header = ({ hideReg, hideView }: IHeaderProps) => {
         )}
       </div>
       <div className="flex flex-row gap-x-10 items-center">
-        <WalletDefault />
+        {/* <WalletDefault /> */}
+        <RainbowKitCustomConnectButton />
       </div>
     </div>
   );
