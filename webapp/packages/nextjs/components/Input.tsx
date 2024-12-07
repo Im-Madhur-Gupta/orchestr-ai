@@ -1,4 +1,4 @@
-const OCInput = (props: any) => {
+const OCInput = ({ ...props }) => {
   return (
     <input
       {...props}

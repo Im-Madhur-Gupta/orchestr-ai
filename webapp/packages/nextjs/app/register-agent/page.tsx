@@ -1,24 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 import OCButton from "~~/components/Button";
-import OCInput from "~~/components/Input";
+import { BASE_URL } from "~~/services/api";
 
 const schema = z.object({
-  username: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
   name: z.string().min(1, {
+    message: "Name is required.",
+  }),
+  description: z.string().min(1, {
     message: "Name is required.",
   }),
   apiUrl: z.string().url({
     message: "Invalid URL.",
   }),
-  description: z.string().optional(),
-  costPerOutputToken: z.number().min(0, {
+  costPerOutputToken: z.string().min(1, {
     message: "Cost must be a positive number.",
   }),
   pfpURL: z.string().url({
@@ -36,51 +37,79 @@ const RegisterAgent = () => {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+  const [loading, setLoading] = useState(false);
+  const { address } = useAccount();
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
+  const onSubmit = async (data: FormData) => {
+    try {
+      setLoading(true);
+      const payload = {
+        agentDescription: data.description,
+        agentName: data.name,
+        agentImage: data.pfpURL,
+        apiUrl: data.apiUrl,
+        costPerOutputToken: parseFloat(data.costPerOutputToken),
+        userAddress: address,
+      };
+      await fetch(`${BASE_URL}/agents`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      alert("Agent registered successfully!");
+      // TODO -> REDIRECT TO ALL AGENTS PAGE
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const inputClassName =
+    "w-full px-6 py-2 bg-gray-800/70 border border-gray-700/50 rounded-full text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition duration-300 ease-in-out";
   return (
     <div className="w-full h-full flex justify-between items-center">
-      <form onSubmit={handleSubmit(onSubmit)} className="flex justify-center items-center w-3/4 h-full">
-        <div className="flex flex-col gap-y-4 w-1/2">
-          <div>
-            <label>Username</label>
-            <OCInput {...register("username")} />
-            {errors.username && <p>{errors.username.message}</p>}
-          </div>
-          <div>
-            <label>Name</label>
-            <OCInput {...register("name")} />
-            {errors.name && <p>{errors.name.message}</p>}
-          </div>
-          <div>
-            <label>API URL</label>
-            <OCInput {...register("apiUrl")} />
-            {errors.apiUrl && <p>{errors.apiUrl.message}</p>}
-          </div>
-          <div>
-            <label>Description</label>
-            <OCInput {...register("description")} />
-          </div>
-          <div>
-            <label>Cost Per Output Token</label>
-            <OCInput type="number" {...register("costPerOutputToken")} />
-            {errors.costPerOutputToken && <p>{errors.costPerOutputToken.message}</p>}
-          </div>
-          <div>
-            <label>Profile URL</label>
-            <OCInput type="text" {...register("pfpURL")} />
-            {errors.pfpURL && <p>{errors.pfpURL.message}</p>}
-          </div>
-          <div className="w-full flex justify-center items-center">
-            <div className="w-1/2 flex justify-center items-center">
-              <OCButton title="Register" props={{ type: "submit" }} />
+      {!loading ? (
+        <form onSubmit={handleSubmit(onSubmit)} className="flex justify-center items-center w-3/4 h-full">
+          <div className="flex flex-col gap-y-4 w-1/2">
+            <div>
+              <label>Name</label>
+              <input {...register("name")} className={inputClassName} />
+              {errors.name && <p>{errors.name.message}</p>}
+            </div>
+            <div>
+              <label>Description</label>
+              <input {...register("description")} className={inputClassName} />
+            </div>
+            <div>
+              <label>API URL</label>
+              <input {...register("apiUrl")} className={inputClassName} />
+              {errors.apiUrl && <p>{errors.apiUrl.message}</p>}
+            </div>
+            <div>
+              <label>Cost Per Output Token</label>
+              <input type="test" {...register("costPerOutputToken")} className={inputClassName} />
+              {errors.costPerOutputToken && <p>{errors.costPerOutputToken.message}</p>}
+            </div>
+            <div>
+              <label>Profile URL</label>
+              <input type="text" {...register("pfpURL")} className={inputClassName} />
+              {errors.pfpURL && <p>{errors.pfpURL.message}</p>}
+            </div>
+            <div className="w-full flex justify-center items-center">
+              <div className="w-1/2 flex justify-center items-center">
+                <OCButton type="submit">Register Agent</OCButton>
+              </div>
             </div>
           </div>
+        </form>
+      ) : (
+        <div className="w-1/2 flex justify-center items-center">
+          <div className="text-3xl font-bold text-center">Registering...</div>
         </div>
-      </form>
+      )}
       <div className="w-1/2 flex flex-col justify-center items-center">
         <div>
           <Image
