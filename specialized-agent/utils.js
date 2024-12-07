@@ -1,4 +1,4 @@
-import { initializeAgent1 } from "./agent.js";
+import { initializeAgent1, initializeAgent2 } from "./agent.js";
 import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { ChatOpenAI } from "@langchain/openai";
@@ -29,7 +29,9 @@ async function getChatGPTStructuredResponse(prompt, schema) {
 
 export const handleRequest = async (input) => {
   // Modify the input string, add to it that divide it into chunks of 1000 characters
-  const modifiedInput = `${input} \n\n\n From the above text, give me structured output in the following format: ${JSON.stringify(responseSchema)} containing the github repo url and improvements to the code.`;
+  const modifiedInput = `${input} \n\n\n From the above text, give me structured output in the following format: ${JSON.stringify(
+    responseSchema
+  )} containing the github repo url and improvements to the code.`;
 
   const response = await getChatGPTStructuredResponse(
     modifiedInput,
@@ -63,6 +65,10 @@ export const handleRequest = async (input) => {
   );
   const { updated_content } = intermediateResponse;
 
+  const { agent: agent2, config: config2 } = await initializeAgent2();
   const inputForAgent2 = `The updated HTMLcontent of the file is: \n\n\n ${updated_content}. \n\n\n Create a Github PR with the updated content. The github repo url is ${github_repo_url}.`;
-  await agent.stream({ messages: [new HumanMessage(inputForAgent2)] }, config);
+  await agent2.stream(
+    { messages: [new HumanMessage(inputForAgent2)] },
+    config2
+  );
 };

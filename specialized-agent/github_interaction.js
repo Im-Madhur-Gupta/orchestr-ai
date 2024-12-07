@@ -1,6 +1,10 @@
 import { Octokit } from "@octokit/rest";
 import fs from "fs";
 
+import dotenv from "dotenv";
+
+dotenv.config();
+
 const githubToken = process.env.GITHUB_TOKEN; // TODO : enter your github token here
 
 const octokit = new Octokit({
@@ -51,7 +55,7 @@ export const updateTitleAndCreatePR = async (wallet, args) => {
     {
       owner,
       repo: repoName,
-      baseBranchName,
+      branch: baseBranchName,
     }
   );
 

@@ -55,7 +55,7 @@ typings/
 .yarn-integrity
 
 # dotenv environment variables file
-.env
+**/.env
 .env.gpg
 
 # next.js build output
@@ -87,6 +87,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 *o7learn-server
+
+**/sha.txt
+**/wallet_data_1.txt
+**/wallet_data_2.txt
 
 
 # C extensions
