@@ -85,7 +85,8 @@ const HeroSection = () => {
 
           {/* Description */}
           <p className="text-lg text-gray-600 text-center max-w-2xl mx-auto mb-8">
-            Orchestrate your AI workflows with unprecedented intelligence and seamless coordination.
+            Orchestrate your AI workflows with unprecedented intelligence and
+            seamless coordination.
           </p>
 
           {/* Subtle Background Effects */}

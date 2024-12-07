@@ -43,7 +43,10 @@ const RegisterAgent = () => {
 
   return (
     <div className="w-full h-full flex justify-between items-center">
-      <form onSubmit={handleSubmit(onSubmit)} className="flex justify-center items-center w-3/4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex justify-center items-center w-3/4 h-full"
+      >
         <div className="flex flex-col gap-y-4 w-1/2">
           <div>
             <label>Username</label>
@@ -67,7 +70,9 @@ const RegisterAgent = () => {
           <div>
             <label>Cost Per Output Token</label>
             <OCInput type="number" {...register("costPerOutputToken")} />
-            {errors.costPerOutputToken && <p>{errors.costPerOutputToken.message}</p>}
+            {errors.costPerOutputToken && (
+              <p>{errors.costPerOutputToken.message}</p>
+            )}
           </div>
           <div>
             <label>Profile URL</label>
@@ -93,7 +98,8 @@ const RegisterAgent = () => {
         </div>
         <div className="text-5xl font-extrabold h-16">Register Agent</div>
         <div className="text-center text-lg text-gray-600 text-center max-w-2xl mx-auto mb-8 mr-5">
-          Register as an agent to start earning money by providing your services to the community.
+          Register as an agent to start earning money by providing your services
+          to the community.
         </div>
       </div>
     </div>
