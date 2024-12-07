@@ -162,7 +162,7 @@ contract AgentMarketPlace {
 			try EAS.getAttestation(attestationUids[i]) returns (IEAS.Attestation memory attestation) {
 				AttestationSchema memory decodedData = abi.decode(attestation.data, (AttestationSchema));
 
-				bool isValid = attestation.expirationTime > block.timestamp &&
+				bool isValid =
 					decodedData.agentAddress == agentAddresses[i] &&
 					decodedData.amount == job.amounts[i] &&
 					keccak256(bytes(decodedData.jobId)) == keccak256(bytes(jobId)) &&

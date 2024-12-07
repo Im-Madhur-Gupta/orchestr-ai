@@ -1,4 +1,7 @@
 const { Octokit } = require("@octokit/rest");
+import { Wallet } from "@coinbase/coinbase-sdk";
+import { GetGithubRepoContentInput } from "./chatbot";
+import { z } from "zod";
 
 const githubToken = ""; // TODO : enter your github token here
 
@@ -6,14 +9,13 @@ const octokit = new Octokit({
     auth: githubToken
 })
 
-//TODO : Update
-const owner = 'AkhileshManda';
-const repo = 'Portfolio';
 const path = 'index.html';
-const branch = 'main';
-const newBranch = 'update-title';
 
-const getDetailsFromRepo = async () => {
+export const getDetailsFromRepo = async (wallet: Wallet,
+    args: z.infer<typeof GetGithubRepoContentInput>) => {
+
+    const { repo_url } = args;
+    const [owner, repo] = repo_url.split('/').slice(-2);
     const response = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
         owner,
         repo,
@@ -27,26 +29,25 @@ const getDetailsFromRepo = async () => {
     return { content, sha: response.data.sha };
 }
 
-const updateTitleAndCreatePR = async () => {
-    const { content, sha } = await getDetailsFromRepo();
+export const updateTitleAndCreatePR = async (baseBranchName, newBranchName, newContent, owner, repo) => {
+    const { content, sha } = await getDetailsFromRepo(owner, repo);
 
     console.log("Content: ", content);
 
-    // Update the title in the HTML content
-    const updatedContent = content.replace('Manda', 'UPDATED SURNAME');
+    const updatedContent = newContent;
     const encodedContent = Buffer.from(updatedContent, 'utf-8').toString('base64');
 
     // Create a new branch
     const { data: refData } = await octokit.request('GET /repos/{owner}/{repo}/git/refs/heads/{branch}', {
         owner,
         repo,
-        branch
+        baseBranchName
     });
 
     await octokit.request('POST /repos/{owner}/{repo}/git/refs', {
         owner,
         repo,
-        ref: `refs/heads/${newBranch}`,
+        ref: `refs/heads/${newBranchName}`,
         sha: refData.object.sha
     });
 
@@ -58,10 +59,10 @@ const updateTitleAndCreatePR = async () => {
         owner,
         repo,
         path,
-        message: 'Update title in index.html',
+        message: 'Updated with new SEO in index.html',
         content: encodedContent,
         sha,
-        branch: newBranch
+        branch: newBranchName
     });
 
     console.log('Changes Commited Successfully');
@@ -70,13 +71,11 @@ const updateTitleAndCreatePR = async () => {
     await octokit.request('POST /repos/{owner}/{repo}/pulls', {
         owner,
         repo,
-        title: 'Update title in index.html',
-        head: newBranch,
-        base: branch,
-        body: 'This PR updates the title in index.html from "Akhilesh Manda" to "Akhilesh".'
+        title: 'Update index.html',
+        head: newBranchName,
+        base: baseBranchName,
+        body: 'This PR updates the SEO of a website'
     });
 
     console.log('Pull request created successfully.');
 }
-
-updateTitleAndCreatePR();
