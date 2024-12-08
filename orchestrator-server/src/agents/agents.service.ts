@@ -11,16 +11,21 @@ import {
   readContract,
 } from '@coinbase/coinbase-sdk';
 import { CONSTANTS } from 'src/utils/constants';
-import * as fs from 'fs';
-import axios from 'axios';
 import { OrchestratorAbi } from 'src/utils/orchestrator-abi';
 import { ethers } from 'ethers';
 import { ExtractFundsDto } from './dto/extract-funds.dto';
+import { WalrusService } from 'src/walrus/walrus.service';
+import { LitProtocolService } from 'src/lit-protocol/lit-protocol.service';
 
-const CONTRACT_ADDRESS = '0x0905f0501E05C64D2e8B706148bae5bee7Dbc7aE';
+const CONTRACT_ADDRESS = '0xc97c268a00b2058c859C5cC3D148723a5cf69948';
 
 @Injectable()
 export class AgentsService {
+  constructor(
+    private readonly walrusService: WalrusService,
+    private readonly litprotocolService: LitProtocolService,
+  ) {}
+
   async create(createAgentDto: CreateAgentDto) {
     const {
       agentDescription,
@@ -29,17 +34,79 @@ export class AgentsService {
       costPerOutputToken,
       userAddress,
       agentName,
+      agentAddress: prefilledAgentAddress,
     } = createAgentDto;
+
+    // return {
+    //   agent: {
+    //     agentAddress: '0x7181Cf608695c09158523469D3bCA24CC95e304E',
+    //     blobId: 'Uh2u9XvOCiaQo2BX281AS03wqM6yPaEktfvWW9F3KQc',
+    //     userAddress: '0x73b794FcA37Dc5951dcdb2674401C299f9775493',
+    //   },
+    //   hash: '0xa5c2f2756479792bc4e1deb48c8a72f35a57cfd08cb0f0b4dfbdf1506e5e7208',
+    // };
+
+    if (prefilledAgentAddress) {
+      const agentData: AgentMetadata = {
+        agentDescription,
+        agentImage,
+        apiUrl,
+        costPerOutputToken,
+        agentName,
+      };
+
+      const data = JSON.stringify(agentData);
+
+      const blobId = await this.walrusService.upload(data);
+
+      console.log('Blob ID:', blobId);
+
+      const agent: AgentDto = {
+        agentAddress: prefilledAgentAddress,
+        blobId: blobId,
+        userAddress: userAddress,
+      };
+
+      const provider = new ethers.JsonRpcProvider('https://sepolia.base.org	');
+      const signer = new ethers.Wallet(
+        CONSTANTS.MAIN_ADDRESS_PRIVATE_KEY,
+        provider,
+      );
+
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        OrchestratorAbi,
+        signer,
+      );
+
+      console.log('agent', agent);
+
+      const registerTx = await contract.registerAgent(
+        prefilledAgentAddress,
+        userAddress,
+        blobId,
+        {
+          gasLimit: 3000000,
+        },
+      );
+
+      console.log('Transaction sent:', registerTx.hash);
+
+      const receipt = await registerTx.wait();
+      console.log('Transaction mined:', receipt);
+
+      return {
+        agent: agent,
+        hash: registerTx.hash,
+      };
+    }
 
     Coinbase.configure({
       apiKeyName: CONSTANTS.COINBASE_KEY_NAME,
       privateKey: CONSTANTS.COINBASE_KEY,
     });
-    const wallet = await CoinbaseWallet.import({
-      walletId: '20e101e3-50ce-4d3c-bbc3-2d2928e50f21',
-      seed: 'ecb99d925322b02128133da0cdf2276acda8f08611d98162450ab7b052d12a4d',
-    });
-    // const wallet = await CoinbaseWallet.create();
+
+    const wallet = await CoinbaseWallet.create();
 
     const address = await wallet.getDefaultAddress();
 
@@ -48,7 +115,12 @@ export class AgentsService {
     const tx = await wallet.faucet();
     await tx.wait();
 
-    fs.writeFileSync(`${agentAddress}.json`, JSON.stringify(wallet.export()));
+    console.log('Tx waited');
+
+    await this.litprotocolService.encryptLit(
+      agentAddress,
+      JSON.stringify(wallet.export()),
+    );
 
     const agentData: AgentMetadata = {
       agentDescription,
@@ -60,24 +132,9 @@ export class AgentsService {
 
     const data = JSON.stringify(agentData);
 
-    const response = await axios.put(
-      'https://publisher.walrus-testnet.walrus.space/v1/store',
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: data,
-      },
-    );
+    const blobId = await this.walrusService.upload(data);
 
-    let blobId = '';
-
-    if (response.data.alreadyCertified) {
-      blobId = response.data.alreadyCertified.blobId;
-    } else {
-      blobId = response.data.newlyCreated.blobObject.blobId;
-    }
+    console.log('Blob ID:', blobId);
 
     const agent: AgentDto = {
       agentAddress: agentAddress,
@@ -85,23 +142,49 @@ export class AgentsService {
       userAddress: userAddress,
     };
 
-    const invocation = await wallet.invokeContract({
-      contractAddress: CONTRACT_ADDRESS,
-      method: 'registerAgent',
-      args: {
-        mpcWalletAddress: agentAddress,
-        metadataId: agent.blobId,
-        ownerAddress: userAddress,
-      },
-      abi: OrchestratorAbi,
-    });
+    // const invocation = await wallet.invokeContract({
+    //   contractAddress: CONTRACT_ADDRESS,
+    //   method: 'registerAgent',
+    //   args: {
+    //     mpcWalletAddress: agentAddress,
+    //     metadataId: agent.blobId,
+    //     ownerAddress: userAddress,
+    //   },
+    //   abi: OrchestratorAbi,
+    // });
 
-    const newInvocation = await invocation.wait();
-    const txHash = newInvocation.getTransactionHash();
+    const provider = new ethers.JsonRpcProvider('https://sepolia.base.org	');
+    const signer = new ethers.Wallet(
+      CONSTANTS.MAIN_ADDRESS_PRIVATE_KEY,
+      provider,
+    );
+
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      OrchestratorAbi,
+      signer,
+    );
+
+    const registerTx = await contract.registerAgent(
+      agentAddress,
+      userAddress,
+      blobId,
+      {
+        gasLimit: 3000000,
+      },
+    );
+
+    console.log('Transaction sent:', registerTx.hash);
+
+    const receipt = await registerTx.wait();
+    console.log('Transaction mined:', receipt);
+
+    // const newInvocation = await invocation.wait();
+    // const txHash = newInvocation.getTransactionHash();
 
     return {
       agent: agent,
-      hash: txHash,
+      hash: registerTx.hash,
     };
   }
 
@@ -123,15 +206,19 @@ export class AgentsService {
       throw new Error('Invalid signature');
     }
 
-    const wallet = await CoinbaseWallet.import({
-      walletId: '20e101e3-50ce-4d3c-bbc3-2d2928e50f21',
-      seed: 'ecb99d925322b02128133da0cdf2276acda8f08611d98162450ab7b052d12a4d',
-    });
+    const res = await this.litprotocolService.decyptLit(agentAddress);
+    const walletData = JSON.parse(res);
+
+    const wallet = await CoinbaseWallet.import(walletData);
 
     const balance = await wallet.getBalance(Coinbase.assets.Eth);
 
+    if (balance.lt(0.00001)) {
+      throw new Error('Insufficient funds');
+    }
+
     const transfer = await wallet.createTransfer({
-      amount: balance,
+      amount: balance.sub(0.00001),
       assetId: Coinbase.assets.Eth,
       destination: userAddress,
     });
@@ -166,31 +253,28 @@ export class AgentsService {
         const metadataId = agent.metadataId;
         const ownerAddress = agent.ownerAddress;
 
-        const metadata = await fetch(
-          `https://aggregator.walrus-testnet.walrus.space/v1/${metadataId}`,
-        );
+        try {
+          const data = await this.walrusService.fetch(metadataId);
+          const dataObj = JSON.parse(data);
 
-        const data = await metadata.json();
+          const fullAgent: FullAgentDto = {
+            agentAddress,
+            ...dataObj,
+            ownerAddress,
+            metadataId,
+          };
 
-        const dataObj = JSON.parse(data.body);
-
-        const fullAgent: FullAgentDto = {
-          agentAddress,
-          ...dataObj,
-          ownerAddress,
-          metadataId,
-        };
-
-        agentsArray.push(fullAgent);
+          agentsArray.push(fullAgent);
+        } catch (err) {
+          console.error('Error fetching agent data:', err);
+        }
       }
-
-      console.log(agentsArray);
 
       return agentsArray;
     }
   }
 
-  async getMyAgent(userAddress: string): Promise<FullAgentDto> {
+  async getMyAgent(userAddress: string): Promise<FullAgentDto[]> {
     Coinbase.configure({
       apiKeyName: CONSTANTS.COINBASE_KEY_NAME,
       privateKey: CONSTANTS.COINBASE_KEY,
@@ -204,30 +288,41 @@ export class AgentsService {
       networkId: 'base-sepolia',
     });
 
+    async function getBalance(address: string): Promise<string> {
+      try {
+        const provider = new ethers.JsonRpcProvider('https://sepolia.base.org	');
+        const balance = await provider.getBalance(address);
+        return ethers.formatEther(balance);
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+      }
+    }
+
+    const agentsArray: FullAgentDto[] = [];
+
     if (agents) {
-      const myAgent = agents.find(
+      const myAgents = agents.filter(
         (agent) =>
           agent.ownerAddress.toLowerCase() === userAddress.toLowerCase(),
       );
 
-      const metadata = await fetch(
-        `https://aggregator.walrus-testnet.walrus.space/v1/${myAgent.metadataId}`,
-      );
+      for (const agent of myAgents) {
+        const data = await this.walrusService.fetch(agent.metadataId);
+        const dataObj = JSON.parse(data);
+        const balance = await getBalance(agent.mpcWalletAddress);
 
-      const data = await metadata.json();
+        const fullAgent: FullAgentDto = {
+          agentAddress: agent.mpcWalletAddress,
+          ...dataObj,
+          ownerAddress: agent.ownerAddress,
+          metadataId: agent.metadataId,
+          balance,
+        };
 
-      const dataObj = JSON.parse(data.body);
-
-      const fullAgent: FullAgentDto = {
-        agentAddress: myAgent.mpcWalletAddress,
-        ...dataObj,
-        ownerAddress: myAgent.ownerAddress,
-        metadataId: myAgent.metadataId,
-      };
-
-      return fullAgent;
+        agentsArray.push(fullAgent);
+      }
     }
 
-    return null;
+    return agentsArray;
   }
 }

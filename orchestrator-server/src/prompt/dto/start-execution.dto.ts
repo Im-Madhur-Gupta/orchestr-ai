@@ -5,4 +5,5 @@ export class StartExecutionDto {
     agentPrice: number;
     agentUrl: string;
   }>;
+  jobId: string;
 }

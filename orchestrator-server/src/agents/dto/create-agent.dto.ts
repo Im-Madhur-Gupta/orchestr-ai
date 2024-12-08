@@ -5,6 +5,7 @@ export class CreateAgentDto {
   agentDescription: string;
   costPerOutputToken: number;
   agentImage: string;
+  agentAddress?: string;
 }
 
 export class AgentDto {
