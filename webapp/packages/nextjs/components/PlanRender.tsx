@@ -11,7 +11,7 @@ interface IPlansRender {
 const Plans = ({ plans, onAccept, onReject }: IPlansRender) => {
   const totalAmount = plans.reduce((acc, plan) => acc + plan.agentPrice, 0);
   return (
-    <div className="my-8 space-y-6 bg-purple-600/10 rounded-2xl p-6 shadow-lg">
+    <div className="my-6 space-y-4 bg-purple-600/10 rounded-2xl p-6 shadow-lg">
       <h2 className="text-2xl font-bold text-white mb-4">Agent Quote</h2>
       <div className="space-y-3">
         {plans.map((plan, index) => (

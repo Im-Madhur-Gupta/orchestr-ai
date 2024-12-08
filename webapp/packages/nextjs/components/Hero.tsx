@@ -22,6 +22,7 @@ const HeroSection = () => {
 
   const [plan, setPlan] = useState<IPlan[] | undefined>(undefined);
   const [promptMetadataURI, setPromptMetadataURI] = useState<string | undefined>(undefined);
+  const [txHash, setTxHash] = useState<string | undefined>(undefined);
   useEffect(() => {
     let currentIndex = 0;
     const typingInterval = setInterval(() => {
@@ -130,6 +131,8 @@ const HeroSection = () => {
         outputSerializedData.push(serializedOutput);
       });
 
+      setTxHash(finalData.txHash);
+
       setFinalOutputData(outputSerializedData);
     } catch (err) {
       console.error(err);
@@ -141,7 +144,7 @@ const HeroSection = () => {
   const loading = isLoading || (plan && plan.length <= 0) || promptExecuted;
   return (
     <div className="w-full h-full flex justify-center items-center">
-      <div className="bg-black flex items-center justify-center p-4 w-4xl" style={{ width: "600px" }}>
+      <div className="bg-black flex items-center justify-center p-4 w-4xl" style={{ width: "800px" }}>
         <div className="w-full">
           {/* Logo and Title Container */}
           {!loading && (
@@ -211,7 +214,7 @@ const HeroSection = () => {
               onAccept={onAccept}
             />
           )}
-          {finalOutputData && finalOutputData.length > 0 && <FinalOutput output={finalOutputData} />}
+          {finalOutputData && finalOutputData.length > 0 && <FinalOutput output={finalOutputData} txHash={txHash} />}
           {/* Subtle Background Effects */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute top-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full blur-2xl animate-pulse"></div>
