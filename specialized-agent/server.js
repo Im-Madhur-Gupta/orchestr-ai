@@ -1,7 +1,7 @@
 import express from "express";
 import { Coinbase, Wallet } from "@coinbase/coinbase-sdk";
 import { handleRequest } from "./utils.js";
-
+import fs from "fs";
 import dotenv from "dotenv";
 
 dotenv.config();
