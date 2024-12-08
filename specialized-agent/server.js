@@ -37,10 +37,7 @@ if (WALLET_DATA && WALLET_DATA?.length > 0) {
     userWallet = await Wallet.import({ seed, walletId });
     await userWallet.listAddresses();
   } catch (e) {
-    return Response.json(
-      { message: "Failed to import wallet" },
-      { status: 500 }
-    );
+    console.error({ message: "Failed to import wallet" }, { status: 500 });
   }
 } else {
   // Otherwise, create a new wallet
